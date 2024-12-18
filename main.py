@@ -1,18 +1,42 @@
 from googleapiclient.discovery import build
 
+
 class checker_api:
     def __init__(self):
         self.api_key = ""
         self.youtube_connector = build('youtube','v3',developerKey=self.api_key)
-        self.query = input("Enter your query:")
+        self.url_input = input("Enter the url of the song:")
         self.maxResults = 5
         self.response_count = 1
+        self.url_video_id = ''
+
+
+    def fetching_videoId_from_url(self):
+        seperated_url = self.url_input.split('=')
+        self.url_video_id = seperated_url[1]
 
     
-    def searching_video(self):
-        request = self.youtube_connector.search().list(part='id', type='video', q=self.query, maxResults=self.maxResults)
-        response = request.execute()
-        return response
+    # def searching_video(self):
+    #     request = self.youtube_connector.search().list(part='id', type='video', q=self.query, maxResults=self.maxResults)
+    #     response = request.execute()
+    #     return response
+
+    def url_copyright_checker(self):
+        print()
+        self.fetching_videoId_from_url()
+        request = self.youtube_connector.videos().list(part='snippet,contentDetails', id=self.url_video_id)
+
+        url_video_details = request.execute()
+
+        if(url_video_details['items'][0]['contentDetails']['licensedContent']):
+            print(f"Title: {url_video_details['items'][0]['snippet']['title']} | ChannelName: {url_video_details['items'][0]['snippet']['channelTitle']} | Copyright: YES")
+
+            print(f"The song {url_video_details['items'][0]['snippet']['title']} is not copyright free")
+
+        else:
+            print(f"Title: {url_video_details['items'][0]['snippet']['title']} | ChannelName: {url_video_details['items'][0]['snippet']['channelTitle']} | Copyright: NO")
+
+
     
     def getting_video_details(self,video_id):
         request = self.youtube_connector.videos().list(part='snippet,contentDetails', id=video_id)
@@ -24,13 +48,16 @@ class checker_api:
             print(f"{self.response_count}. Title: {details['items'][0]['snippet']['title']} | ChannelName: {details['items'][0]['snippet']['channelTitle']} | Copyright: NO | URL: https://www.youtube.com/watch?v={details['items'][0]['id']}")
 
     def main(self):
-        results = self.searching_video()
-        video_list=results['items']
-        for i in range(len(video_list)):
-            video_id=video_list[i]['id']['videoId']
-            self.getting_video_details(video_id)
-            self.response_count += 1
-            print()
+
+        self.url_copyright_checker()
+
+        # results = self.searching_video()
+        # video_list=results['items']
+        # for i in range(len(video_list)):
+        #     video_id=video_list[i]['id']['videoId']
+        #     self.getting_video_details(video_id)
+        #     self.response_count += 1
+        #     print()
         
 
 check = checker_api()
