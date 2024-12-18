@@ -9,6 +9,8 @@ class checker_api:
         self.url_video_id = ''
         self.reference_video_title = ''
         self.url_video_desc = ''
+        self.recommendation_count = 1
+        self.recommendation_state = False
 
     def fetching_videoId_from_url(self):
         seperated_url = self.url_input.split('=')
@@ -33,7 +35,7 @@ class checker_api:
 
 
         if(url_video_details['items'][0]['contentDetails']['licensedContent']):
-            print(f"Title: {url_video_details['items'][0]['snippet']['title']} | ChannelName: {url_video_details['items'][0]['snippet']['channelTitle']} | Copyright: YES")
+            print(f"VideoTitle: {url_video_details['items'][0]['snippet']['title']} | ChannelName: {url_video_details['items'][0]['snippet']['channelTitle']} | Copyright: YES")
 
             print()
 
@@ -46,14 +48,16 @@ class checker_api:
 
 
         else:
-            print(f"Title: {url_video_details['items'][0]['snippet']['title']} | ChannelName: {url_video_details['items'][0]['snippet']['channelTitle']} | Copyright: NO")
+            print(f"VideoTitle: {url_video_details['items'][0]['snippet']['title']} | ChannelName: {url_video_details['items'][0]['snippet']['channelTitle']} | Copyright: NO")
+
+            print()
 
             print(f"The song {url_video_details['items'][0]['snippet']['title']} is copyright free on youtube")
 
 
 
     
-    def getting_reference_video_details(self,video_id):
+    def getting_recommendation_video_details(self,video_id):
         request = self.youtube_connector.videos().list(part='snippet,contentDetails', id=video_id)
         details = request.execute()
 
@@ -61,10 +65,17 @@ class checker_api:
             for description_word in self.url_video_desc:
                 if(description_word in details['items'][0]['snippet']['description'].split('\n')):
                     if(details['items'][0]['contentDetails']['licensedContent'] == False and self.reference_video_title in details['items'][0]['snippet']['title']):
-                        print(f"* Title: {details['items'][0]['snippet']['title']} | ChannelName: {details['items'][0]['snippet']['channelTitle']} | Copyright: NO | URL: https://www.youtube.com/watch?v={details['items'][0]['id']}")
+                        self.recommendation_state = True
+                        print(f"{self.recommendation_count}. VideoTitle: {details['items'][0]['snippet']['title']} | ChannelName: {details['items'][0]['snippet']['channelTitle']} | Copyright: NO | URL: https://www.youtube.com/watch?v={details['items'][0]['id']}")
                         print()
+                        self.recommendation_count += 1
                         break
 
+            if(self.recommendation_state == False):
+                print("***Sincere apologies we dont have any copyright free version for the song on youtube***")
+            
+
+            
 
         except:
             print("OOPS SOMETHING WENT WRONG")
@@ -75,7 +86,9 @@ class checker_api:
         video_list=results['items']
         for i in range(len(video_list)):
             video_id=video_list[i]['id']['videoId']
-            self.getting_reference_video_details(video_id)
+            if(self.recommendation_state == False):
+                self.getting_recommendation_video_details(video_id)
+                break
 
     def main(self):
         self.url_copyright_checker()
