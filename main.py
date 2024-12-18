@@ -1,15 +1,14 @@
 from googleapiclient.discovery import build
 
-
 class checker_api:
     def __init__(self):
         self.api_key = ""
         self.youtube_connector = build('youtube','v3',developerKey=self.api_key)
-        self.url_input = input("Enter the url of the song:")
+        self.url_input = input("Enter the url of the song:").strip()
         self.maxResults = 50
         self.url_video_id = ''
         self.reference_video_title = ''
-        self.url_video_tags = []
+        self.url_video_desc = ''
 
     def fetching_videoId_from_url(self):
         seperated_url = self.url_input.split('=')
@@ -30,17 +29,20 @@ class checker_api:
 
         self.reference_video_title = url_video_details['items'][0]['snippet']['title']
 
-        self.url_video_tags = url_video_details['items'][0]['snippet']['tags']
+        self.url_video_desc = url_video_details['items'][0]['snippet']['description'].split('\n')
+
 
         if(url_video_details['items'][0]['contentDetails']['licensedContent']):
             print(f"Title: {url_video_details['items'][0]['snippet']['title']} | ChannelName: {url_video_details['items'][0]['snippet']['channelTitle']} | Copyright: YES")
 
+            print()
+
             print(f"The song {url_video_details['items'][0]['snippet']['title']} is copyrighted on youtube")
             print()
-            
+             
             print("***Since the given song is copyrighted on youtube we have some recommendations for the same song but which does not have any copyright issues***")
             print("\v")
-            self.reccomendation_video_displayer()
+            self.recommendation_video_displayer()
 
 
         else:
@@ -56,15 +58,19 @@ class checker_api:
         details = request.execute()
 
         try:
-            if(details['items'][0]['contentDetails']['licensedContent'] == False and self.reference_video_title in details['items'][0]['snippet']['title'] and self.url_video_tags in details['items'][0]['snippet']['tags']):
-                print(f"* Title: {details['items'][0]['snippet']['title']} | ChannelName: {details['items'][0]['snippet']['channelTitle']} | Copyright: NO | URL: https://www.youtube.com/watch?v={details['items'][0]['id']}")
-                print()
+            for description_word in self.url_video_desc:
+                if(description_word in details['items'][0]['snippet']['description'].split('\n')):
+                    if(details['items'][0]['contentDetails']['licensedContent'] == False and self.reference_video_title in details['items'][0]['snippet']['title']):
+                        print(f"* Title: {details['items'][0]['snippet']['title']} | ChannelName: {details['items'][0]['snippet']['channelTitle']} | Copyright: NO | URL: https://www.youtube.com/watch?v={details['items'][0]['id']}")
+                        print()
+                        break
 
-        except KeyError:
-            print("OOPS SORRY NO TAGS FOUND FOR THIS ONE")
+
+        except:
+            print("OOPS SOMETHING WENT WRONG")
 
 
-    def reccomendation_video_displayer(self):
+    def recommendation_video_displayer(self):
         results = self.searching_reference_video()
         video_list=results['items']
         for i in range(len(video_list)):
